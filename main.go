@@ -62,5 +62,7 @@ func main() {
 	authorized.POST("/cc/update", updateCC)
 	authorized.GET("/cc/query", queryCC)
 
+	authorized.GET("/transaction/:txID", queryTransactionByTxID)
+
 	router.Run(":" + serverConfig.Port)
 }

@@ -7,6 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/channel"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/ledger"
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 )
 
@@ -91,7 +93,7 @@ func invokeCC(ctx *gin.Context) {
 	txid := result.TransactionID
 	valid := result.TxValidationCode
 
-	log.Println("the categorypost response is : ", txid, "====", valid, "===", string(response))
+	log.Println("the response is : ", txid, "====", valid, "===", string(response))
 	ctx.JSON(http.StatusOK, gin.H{"status": status, "TxId": txid, "Valid": valid, "response": string(response)})
 }
 
@@ -130,4 +132,52 @@ func queryCC(ctx *gin.Context) {
 
 	log.Println("the response is : ", string(response))
 	ctx.JSON(http.StatusOK, gin.H{"status": status, "response": string(response)})
+}
+
+func queryTransactionByTxID(ctx *gin.Context) {
+	txID := ctx.Param("txID")
+
+	parseParameters(ctx)
+
+	channelContext := sdk.ChannelContext(request.ChannelID, fabsdk.WithUser(serverConfig.UserName), fabsdk.WithOrg(serverConfig.OrgName))
+	ledgerClient, err := ledger.New(channelContext)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println(err.Error())
+		return
+	}
+
+	tx, err := ledgerClient.QueryTransaction(fab.TransactionID(txID), ledger.WithTargetEndpoints(serverConfig.TargetPeers...))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println(err.Error())
+		return
+	}
+
+	block, err := ledgerClient.QueryBlockByTxID(fab.TransactionID(txID), ledger.WithTargetEndpoints(serverConfig.TargetPeers...))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println(err.Error())
+		return
+	}
+
+	txD, err := convertEnvelopeToTXDetail(tx.ValidationCode, tx.GetTransactionEnvelope())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println(err.Error())
+		return
+	}
+
+	txD.BlockNumber = block.GetHeader().Number
+	txD.ChannelName = request.ChannelID
+
+	txDBytes, err := json.Marshal(txD.Payload)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Println(err.Error())
+		return
+	}
+	// log.Println("the response is : ", string(txDBytes))
+	log.Println("the response is : ", string(txDBytes))
+	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "response": txD.Transaction})
 }
