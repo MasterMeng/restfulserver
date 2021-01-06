@@ -68,7 +68,7 @@ func invokeCC(ctx *gin.Context) {
 
 	args := make([][]byte, 0)
 	for i, arg := range request.Args {
-		log.Println("the request.Arg : ", i, arg)
+		log.Println("the invokeCC request.Arg : ", i, arg)
 		args = append(args, []byte(arg))
 	}
 
@@ -80,7 +80,7 @@ func invokeCC(ctx *gin.Context) {
 		},
 	)
 	if err != nil {
-		log.Println("the response err info is : ", err.Error())
+		log.Println("the invokeCC response err info is : ", err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -108,7 +108,7 @@ func queryCC(ctx *gin.Context) {
 
 	args := make([][]byte, 0)
 	for i, arg := range request.Args {
-		log.Println("the request.Arg : ", i, arg)
+		log.Println("the queryCC request.Arg : ", i, arg)
 		args = append(args, []byte(arg))
 	}
 
@@ -120,7 +120,7 @@ func queryCC(ctx *gin.Context) {
 		},
 	)
 	if err != nil {
-		log.Println("the response err info is : ", err.Error())
+		log.Println("the queryCC response err info is : ", err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
