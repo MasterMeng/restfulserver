@@ -1,0 +1,20 @@
+version: 1.0.0
+
+restfulserver:
+  port: 1003
+  ginuser:
+    - user: user1
+      passwd: 123456
+    - user: user2
+      passwd: 234567
+
+sdkconfig:
+  configPath: ./config/config-fabric.yaml
+  orgName: Org1
+  userName: Admin
+  targetPeers: 
+    - peer0.org1.example.com
+    - peer1.org1.example.com
+    # - peer0.org2.example.com
+    # - peer1.org2.example.com
+  targetOrderer: orderer.example.com
