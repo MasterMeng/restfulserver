@@ -1,25 +1,23 @@
 package main
 
 import (
+	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/ewagmig/fabric/common/tools/protolator"
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/ledger/rwset"
 	"github.com/hyperledger/fabric-protos-go/ledger/rwset/kvrwset"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	"github.com/hyperledger/fabric-protos-go/peer"
-
-	gmx509 "github.com/flyinox/crypto/x509"
 )
 
 type cachedIdentity struct {
 	mspID string
-	cert  *gmx509.Certificate
+	cert  *x509.Certificate
 }
 
 func getIdentity(serilizedIdentity []byte) (*cachedIdentity, error) {
@@ -31,7 +29,7 @@ func getIdentity(serilizedIdentity []byte) (*cachedIdentity, error) {
 		return nil, err
 	}
 
-	var cert *gmx509.Certificate
+	var cert *x509.Certificate
 	cert, err = decodeX509Pem(sid.IdBytes)
 	if err != nil {
 		return nil, err
@@ -44,13 +42,13 @@ func getIdentity(serilizedIdentity []byte) (*cachedIdentity, error) {
 	}, nil
 
 }
-func decodeX509Pem(certPem []byte) (*gmx509.Certificate, error) {
+func decodeX509Pem(certPem []byte) (*x509.Certificate, error) {
 	block, _ := pem.Decode(certPem)
 	if block == nil {
 		return nil, fmt.Errorf("bad cert")
 	}
 
-	return gmx509.ParseCertificate(block.Bytes)
+	return x509.ParseCertificate(block.Bytes)
 }
 
 type Endorser struct {
@@ -58,8 +56,8 @@ type Endorser struct {
 	Name string `json:"name"`
 }
 
-// Transaction is the detail of transaction, but not contains RW set
-type Transaction struct {
+// TransactionDetail is the detail of transaction, but not contains RW set
+type TransactionDetail struct {
 	ChannelName      string `json:"channel_name"`
 	ID               string `json:"id"`
 	Type             string `json:"type"`
@@ -84,15 +82,8 @@ type RawValue struct {
 	// Reads       []*kvrwset.KVRead  `json:"reads"`
 }
 
-// TransactionDetail contains RW set
-type TransactionDetail struct {
-	*Transaction
-	Payload interface{} `json:"payload"`
-}
-
 func convertEnvelopeToTXDetail(txFlag int32, env *common.Envelope) (*TransactionDetail, error) {
 	// log.Println(env)
-	txDetail := &TransactionDetail{}
 	payload, err := GetPayload(env)
 	if err != nil {
 		log.Printf("Unexpected error from unmarshal envelope: %v", err)
@@ -119,7 +110,7 @@ func convertEnvelopeToTXDetail(txFlag int32, env *common.Envelope) (*Transaction
 		return nil, err
 	}
 
-	tx := &Transaction{
+	tx := &TransactionDetail{
 		ID:               chdr.TxId,
 		Type:             common.HeaderType_name[chdr.Type],
 		CreatorMSP:       identity.mspID,
@@ -177,17 +168,7 @@ func convertEnvelopeToTXDetail(txFlag int32, env *common.Envelope) (*Transaction
 		return nil, err
 	}
 	tx.Value.IDs = keys
-
-	txDetail.Transaction = tx
-
-	tree, err := protolator.GetMessageTree(env)
-	if err != nil {
-		log.Println("GetMessageTree env is:", env)
-		return nil, fmt.Errorf("Failed to unmarshal ConfigEnvelope caused by error %v", err)
-	}
-	txDetail.Payload = tree
-
-	return txDetail, nil
+	return tx, nil
 }
 
 func parseChaincodeEnvelope(env *common.Envelope) (*peer.ChaincodeProposalPayload, []*peer.Endorsement, *peer.ChaincodeAction, error) {

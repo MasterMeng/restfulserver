@@ -5,7 +5,6 @@ go 1.15
 require (
 	github.com/Shopify/sarama v1.27.2 // indirect
 	github.com/ewagmig/fabric v1.4.4-0.20200828030817-34d44ec96999
-	github.com/flyinox/crypto v0.0.0-20181115071019-41abcab37232
 	github.com/fsouza/go-dockerclient v1.7.0 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/golang/protobuf v1.4.3

@@ -171,13 +171,13 @@ func queryTransactionByTxID(ctx *gin.Context) {
 	txD.BlockNumber = block.GetHeader().Number
 	txD.ChannelName = request.ChannelID
 
-	txDBytes, err := json.Marshal(txD.Payload)
+	txDBytes, err := json.Marshal(txD)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		log.Println(err.Error())
 		return
 	}
-	// log.Println("the response is : ", string(txDBytes))
+	
 	log.Println("the response is : ", string(txDBytes))
-	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "response": txD.Transaction})
+	ctx.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "response": txD})
 }
